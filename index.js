@@ -5,8 +5,7 @@ const { GridFsStorage } = require("multer-gridfs-storage");
 const { GridFSBucket } = require("mongodb");
 const ObjectId = require("mongoose").Types.ObjectId;
 
-//allow cross origin requests
-
+// Allow cross-origin requests
 const app = express();
 const port = 5000;
 app.use((req, res, next) => {
@@ -16,11 +15,11 @@ app.use((req, res, next) => {
 });
 
 // Connect to MongoDB
-mongoose.connect("mongodb://localhost:27017/f50");
+mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
 
 // Initialize GridFS storage engine
 const storage = new GridFsStorage({
-  url: "mongodb://localhost:27017/f50",
+  url: process.env.MONGO_URI,
   file: (req, file) => {
     return {
       filename: file.originalname,
