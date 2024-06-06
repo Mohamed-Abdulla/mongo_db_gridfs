@@ -1,5 +1,5 @@
 # Use the official Node.js image as a base image
-FROM node:16
+FROM node:18-alpine
 
 # Set the working directory inside the container
 WORKDIR /app
@@ -14,7 +14,7 @@ RUN npm install
 COPY . .
 
 # Expose the port the app runs on
-EXPOSE 5000
+EXPOSE 5080
 
 # Start the application
-CMD ["node", "index.js"]
+CMD [ "npm", "start" ]

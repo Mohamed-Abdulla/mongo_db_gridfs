@@ -1,11 +1,8 @@
-# Ignore files inside the logs directory
-/logs/*
-
-# Ignore specific files
-.env
-
-# Ignore node_modules directory
 /node_modules
 
+.env
+docker-compose.yml
+
+/logs/*
 # Ignore log files
 *.log

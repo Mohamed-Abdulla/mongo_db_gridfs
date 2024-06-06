@@ -1,4 +1,4 @@
-version: '3.8'
+version: "3.8"
 
 services:
   mongodb:
@@ -13,9 +13,10 @@ services:
     build: .
     container_name: express-app
     ports:
-      - "5000:5000"
+      - "5080:5080"
     environment:
       - MONGO_URI=mongodb://mongodb:27017/f50
+      - PORT=5080
     depends_on:
       - mongodb
 
