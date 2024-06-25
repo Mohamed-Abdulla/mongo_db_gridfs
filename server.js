@@ -69,7 +69,15 @@ app.get("/storage/api/v1/video/:filename", async (req, res) => {
     // Open download stream
     const downloadStream = bucket.openDownloadStream(file._id);
 
-    res.set("Content-Type", "video/mp4");
+    // res.set("Content-Type", "video/mp4");
+res.set({
+      'Content-Type': 'video/mp4',
+      'Cache-Control': 'no-cache',
+      'Accept-Ranges': 'bytes',
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+      'Access-Control-Allow-Methods': 'GET, HEAD, OPTIONS',
+    });
 
     // Pipe download stream to response
     downloadStream.pipe(res);
