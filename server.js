@@ -47,6 +47,45 @@ app.post("/storage/api/v1/upload", upload.single("video"), (req, res) => {
   res.send("File uploaded successfully");
 });
 
+// app.get("/storage/api/v1/video/:filename", async (req, res) => {
+//   const filename = req.params.filename;
+
+//   // Get native MongoDB database object
+//   const db = mongoose.connection.getClient().db();
+
+//   // Create GridFSBucket instance
+//   const bucket = new GridFSBucket(db, {
+//     bucketName: "uploads", // Change this if you used a different bucket name
+//   });
+
+//   try {
+//     const filesCollection = db.collection("uploads.files");
+//     const file = await filesCollection.findOne({ filename: filename });
+
+//     if (!file) {
+//       return res.status(404).send("File not found");
+//     }
+
+//     // Open download stream
+//     const downloadStream = bucket.openDownloadStream(file._id);
+
+//     // res.set("Content-Type", "video/mp4");
+// res.set({
+//       'Content-Type': 'video/mp4',
+//       'Cache-Control': 'no-cache',
+//       'Accept-Ranges': 'bytes',
+//       'Access-Control-Allow-Origin': '*',
+//       'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+//       'Access-Control-Allow-Methods': 'GET, HEAD, OPTIONS',
+//     });
+
+//     // Pipe download stream to response
+//     downloadStream.pipe(res);
+//   } catch (error) {
+//     console.error("Error retrieving file:", error);
+//     res.status(500).send("Error retrieving file");
+//   }
+// });
 app.get("/storage/api/v1/video/:filename", async (req, res) => {
   const filename = req.params.filename;
 
@@ -55,7 +94,7 @@ app.get("/storage/api/v1/video/:filename", async (req, res) => {
 
   // Create GridFSBucket instance
   const bucket = new GridFSBucket(db, {
-    bucketName: "uploads", // Change this if you used a different bucket name
+    bucketName: "uploads",
   });
 
   try {
@@ -66,27 +105,51 @@ app.get("/storage/api/v1/video/:filename", async (req, res) => {
       return res.status(404).send("File not found");
     }
 
-    // Open download stream
-    const downloadStream = bucket.openDownloadStream(file._id);
+    const fileSize = file.length;
+    const range = req.headers.range;
 
-    // res.set("Content-Type", "video/mp4");
-res.set({
-      'Content-Type': 'video/mp4',
-      'Cache-Control': 'no-cache',
-      'Accept-Ranges': 'bytes',
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-      'Access-Control-Allow-Methods': 'GET, HEAD, OPTIONS',
-    });
+    if (range) {
+      const parts = range.replace(/bytes=/, "").split("-");
+      const start = parseInt(parts[0], 10);
+      const end = parts[1] ? parseInt(parts[1], 10) : fileSize - 1;
+      const chunksize = (end - start) + 1;
 
-    // Pipe download stream to response
-    downloadStream.pipe(res);
+      if (start >= fileSize || end >= fileSize) {
+        res.status(416).send("Requested range not satisfiable\n" + start + " >= " + fileSize);
+        return;
+      }
+
+      res.writeHead(206, {
+        'Content-Range': `bytes ${start}-${end}/${fileSize}`,
+        'Accept-Ranges': 'bytes',
+        'Content-Length': chunksize,
+        'Content-Type': 'video/mp4',
+        'Cache-Control': 'no-cache',
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+        'Access-Control-Allow-Methods': 'GET, HEAD, OPTIONS',
+      });
+
+      const downloadStream = bucket.openDownloadStream(file._id, { start, end: end + 1 });
+      downloadStream.pipe(res);
+    } else {
+      res.writeHead(200, {
+        'Content-Length': fileSize,
+        'Content-Type': 'video/mp4',
+        'Cache-Control': 'no-cache',
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+        'Access-Control-Allow-Methods': 'GET, HEAD, OPTIONS',
+      });
+
+      const downloadStream = bucket.openDownloadStream(file._id);
+      downloadStream.pipe(res);
+    }
   } catch (error) {
     console.error("Error retrieving file:", error);
     res.status(500).send("Error retrieving file");
   }
 });
-
 app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);
 });
