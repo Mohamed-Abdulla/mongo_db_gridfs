@@ -5,7 +5,6 @@ const multer = require("multer");
 const { GridFsStorage } = require("multer-gridfs-storage");
 const { GridFSBucket } = require("mongodb");
 const logger = require("./logger");
-const apiKeyMiddleware = require("./middleware");
 
 // Allow cross-origin requests
 const app = express();
@@ -19,7 +18,7 @@ app.use((req, res, next) => {
   res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
   next();
 });
-app.use(apiKeyMiddleware);
+// app.use(apiKeyMiddleware);
 // Connect to MongoDB
 mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
 
