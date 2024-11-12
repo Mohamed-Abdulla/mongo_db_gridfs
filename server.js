@@ -48,6 +48,14 @@ app.post("/storage/api/v1/upload", upload.single("video"), (req, res) => {
   res.send("File uploaded successfully");
 });
 
+//list all videos
+app.get("/storage/api/v1/videos", async (req, res) => {
+  const db = mongoose.connection.getClient().db();
+  const collection = db.collection("uploads.files");
+  const files = await collection.find().toArray();
+  res.json(files);
+});
+
 // app.get("/storage/api/v1/video/:filename", async (req, res) => {
 //   const filename = req.params.filename;
 
