@@ -4,6 +4,8 @@ const mongoose = require("mongoose");
 const multer = require("multer");
 const { GridFsStorage } = require("multer-gridfs-storage");
 const { GridFSBucket } = require("mongodb");
+const cors = require("cors");
+
 const logger = require("./logger");
 
 // Allow cross-origin requests
@@ -12,6 +14,8 @@ const port = process.env.PORT || 5080;
 
 console.log = logger.info.bind(logger);
 console.error = logger.error.bind(logger);
+// Apply CORS middleware
+app.use(cors());
 
 app.use((req, res, next) => {
   res.header("Access-Control-Allow-Origin", "*");
