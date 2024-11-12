@@ -74,7 +74,7 @@ app.delete("/storage/api/v1/videos", async (req, res) => {
       if (!mongoose.Types.ObjectId.isValid(id)) {
         throw new Error(`Invalid ObjectId: ${id}`);
       }
-      return mongoose.Types.ObjectId(id);
+      return new mongoose.Types.ObjectId(id);
     });
 
     const result = await collection.deleteMany({ _id: { $in: objectIds } });
