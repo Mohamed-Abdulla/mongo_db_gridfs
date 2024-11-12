@@ -58,18 +58,33 @@ app.get("/storage/api/v1/videos", async (req, res) => {
 
 // delete video by id
 app.delete("/storage/api/v1/videos", async (req, res) => {
-  const db = mongoose.connection.getClient().db();
-  const collection = db.collection("uploads.files");
-  const ids = req.body.ids; // Expecting an array of ids in the request body
+  try {
+    const db = mongoose.connection.getClient().db();
+    const collection = db.collection("uploads.files");
+    const ids = req.body.ids; // Expecting an array of ids in the request body
 
-  if (!Array.isArray(ids) || ids.length === 0) {
-    return res.status(400).send("Invalid request: ids should be a non-empty array");
+    if (!Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).send("Invalid request: ids should be a non-empty array");
+    }
+
+    // Validate that all ids are valid ObjectId strings
+    const objectIds = ids.map((id) => {
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+        throw new Error(`Invalid ObjectId: ${id}`);
+      }
+      return mongoose.Types.ObjectId(id);
+    });
+
+    const result = await collection.deleteMany({ _id: { $in: objectIds } });
+
+    res.send(`${result.deletedCount} files deleted successfully`);
+  } catch (error) {
+    console.error("Error during deletion:", error);
+    if (error.message.includes("Invalid ObjectId")) {
+      return res.status(400).send(error.message);
+    }
+    res.status(500).send("An error occurred while deleting files.");
   }
-
-  const objectIds = ids.map((id) => mongoose.Types.ObjectId(id));
-  await collection.deleteMany({ _id: { $in: objectIds } });
-
-  res.send("Files deleted successfully");
 });
 
 // app.get("/storage/api/v1/video/:filename", async (req, res) => {
