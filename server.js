@@ -56,6 +56,22 @@ app.get("/storage/api/v1/videos", async (req, res) => {
   res.json(files);
 });
 
+// delete video by id
+app.delete("/storage/api/v1/videos", async (req, res) => {
+  const db = mongoose.connection.getClient().db();
+  const collection = db.collection("uploads.files");
+  const ids = req.body.ids; // Expecting an array of ids in the request body
+
+  if (!Array.isArray(ids) || ids.length === 0) {
+    return res.status(400).send("Invalid request: ids should be a non-empty array");
+  }
+
+  const objectIds = ids.map((id) => mongoose.Types.ObjectId(id));
+  await collection.deleteMany({ _id: { $in: objectIds } });
+
+  res.send("Files deleted successfully");
+});
+
 // app.get("/storage/api/v1/video/:filename", async (req, res) => {
 //   const filename = req.params.filename;
 
