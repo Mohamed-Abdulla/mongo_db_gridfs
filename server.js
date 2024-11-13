@@ -49,26 +49,32 @@ app.get("/storage", (req, res) => {
 });
 
 // Route for uploading video
-// app.post("/storage/api/v1/upload", upload.single("video"), (req, res) => {
-//   console.log("File uploaded successfully");
-//   res.send("File uploaded successfully");
-// });
-// Check if file with the same name already exists
-app.post("/storage/api/v1/upload", upload.single("video"), async (req, res) => {
+
+app.post("/storage/api/v1/upload", async (req, res) => {
   try {
     const db = mongoose.connection.getClient().db();
     const filesCollection = db.collection("uploads.files");
-    const existingFile = await filesCollection.findOne({ filename: req.file.originalname });
+
+    // Check for existing file with the same name
+    const existingFile = await filesCollection.findOne({ filename: req.headers["x-file-name"] });
 
     if (existingFile) {
-      return res.status(400).send("File with the same name already exists");
+      return res.status(400).json({ message: "File with the same name already exists" });
     }
 
-    console.log("File uploaded successfully");
-    res.send("File uploaded successfully");
+    // Dynamically apply multer middleware after duplicate check passes
+    upload.single("video")(req, res, (err) => {
+      if (err) {
+        console.error("Error during file upload:", err);
+        return res.status(500).json({ message: "An error occurred while uploading the file." });
+      }
+
+      console.log("File uploaded successfully");
+      res.json({ message: "File uploaded successfully" });
+    });
   } catch (error) {
     console.error("Error during file upload:", error);
-    res.status(500).send("An error occurred while uploading the file.");
+    res.status(500).json({ message: "An error occurred while uploading the file." });
   }
 });
 
