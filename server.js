@@ -49,9 +49,27 @@ app.get("/storage", (req, res) => {
 });
 
 // Route for uploading video
-app.post("/storage/api/v1/upload", upload.single("video"), (req, res) => {
-  console.log("File uploaded successfully");
-  res.send("File uploaded successfully");
+// app.post("/storage/api/v1/upload", upload.single("video"), (req, res) => {
+//   console.log("File uploaded successfully");
+//   res.send("File uploaded successfully");
+// });
+// Check if file with the same name already exists
+app.post("/storage/api/v1/upload", upload.single("video"), async (req, res) => {
+  try {
+    const db = mongoose.connection.getClient().db();
+    const filesCollection = db.collection("uploads.files");
+    const existingFile = await filesCollection.findOne({ filename: req.file.originalname });
+
+    if (existingFile) {
+      return res.status(400).send("File with the same name already exists");
+    }
+
+    console.log("File uploaded successfully");
+    res.send("File uploaded successfully");
+  } catch (error) {
+    console.error("Error during file upload:", error);
+    res.status(500).send("An error occurred while uploading the file.");
+  }
 });
 
 //list all videos
